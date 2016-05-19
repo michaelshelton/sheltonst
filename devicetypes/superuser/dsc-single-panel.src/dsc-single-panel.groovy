@@ -10,24 +10,32 @@ metadata {
   // Automatically generated. Make future change here.
   definition (name: "DSC Single Panel", author: "Kent Holloway <drizit@gmail.com>") {
     // Change or define capabilities here as needed
-    capability "Refresh"
+	capability "Alarm"
     capability "Polling"
+    capability "Refresh"
+	capability "Button"
 
     // Add commands as needed
     command "partition"
+    command "setPartitionState"
+    
+      attribute "partition1", "string"
+      attribute "alarmStatus", "string"
+      attribute "alarmstate", "string"
   }
 
   simulator {
     // Nothing here, you could put some testing stuff here if you like
   }
 
+  //Icons here - http://scripts.3dgo.net/smartthings/icons/
   tiles {
-    standardTile("dscpartition", "device.dscpartition", width: 2, height: 2, canChangeBackground: true, canChangeIcon: true) {
-      state "armed",     label: 'Armed',      backgroundColor: "#79b821", icon:"st.Home.home3"
+    standardTile("dscpartition", "device.dscpartition", width: 2, height: 2, canChangeBackground: false, canChangeIcon: true) {
+      state "armed",     label: 'Armed',      backgroundColor: "#3BE00D", icon:"st.Home.home3"
       state "exitdelay", label: 'Exit Delay', backgroundColor: "#ff9900", icon:"st.Home.home3"
-      state "entrydelay",label: 'EntryDelay', backgroundColor: "#ff9900", icon:"st.Home.home3"
+      state "entrydelay",label: 'Entry Delay', backgroundColor: "#ff9900", icon:"st.Home.home3"
       state "notready",  label: 'Open',       backgroundColor: "#ffcc00", icon:"st.Home.home2"
-      state "ready",     label: 'Ready',      backgroundColor: "#79b821", icon:"st.Home.home2"
+      state "ready",     label: 'Ready',      backgroundColor: "#0DA4E0", icon:"st.Home.home2"
       state "alarm",     label: 'Alarm',      backgroundColor: "#ff0000", icon:"st.Home.home3"
     }
 
@@ -54,6 +62,12 @@ def partition(String state, String partition) {
     log.debug "Partition: ${state} for partition: ${partition}"
     sendEvent (name: "dscpartition", value: "${state}")
 }
+
+//[MS]
+def setPartitionState( String state ) {
+    sendEvent ( name: "dscpartition", value: state )
+}
+
 
 def poll() {
   log.debug "Executing 'poll'"
