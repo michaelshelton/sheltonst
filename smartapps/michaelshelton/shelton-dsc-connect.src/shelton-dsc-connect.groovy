@@ -303,47 +303,58 @@ private updatePartitions( paneldevices, partitionnum, partitionstatus ) {
 		//Get Current Value
         //log.debug "Currently: "+ partitionnum.currentValue("device.dscpartition")
 
+
 		//Set Panel to new value
-        if (paneldevice) {
-        	paneldevice.partition("${partitionstatus}", "${partitionnum}")
-        }
-		
+//        if (paneldevice) {
+//        	paneldevice.partition("${partitionstatus}", "${partitionnum}")
+//        }
+
         //[MS] using new command
-		paneldevices.setPartitionState( partitionstatus )
+        if ( paneldevice ){
+        
+			//Did it change?
+            if (paneldevice.currentValue("dscpartition") != partitionstatus ){
+				paneldevices.setPartitionState( partitionstatus )
+
+                //Run Routines if configured
+                if (partitionstatus == "alarm") {
+
+                    //Trigger Routine
+                    location.helloHome?.execute( settings.alarmRoutine )
+
+                    //sendMessage("Alarm")
+                    if ( notifyArmed =="Yes" ){
+                        sendPush( "Alarm Triggered" )
+                    }
+                } else if (partitionstatus == "armed"){
+
+                    //Trigger Routine
+                    location.helloHome?.execute( settings.armedRoutine )
+
+                    if ( notifyAlarm =="Yes" ){
+                        sendPush( "Alarm Armed" )
+                    }
+                    //sendMessage("Armed")
+                } else if (partitionstatus == "disarmed"){
+
+                    //Trigger Routine
+                    location.helloHome?.execute( settings.disarmRoutine )
+
+                    if ( notifyDisarmed == "Yes" ){
+                        sendPush( "Alarm Disarmed" )
+                    }
+                    //sendMessage("Disarmed")
+                }
+
+
+
+			}
+        }
+
 
 		resp << [Settings: settings]
 
 		//resp << [Status: partitionstatus]
-        
-		//Run Routines if configured
-        if (partitionstatus == "alarm") {
-            
-			//Trigger Routine
-            location.helloHome?.execute( settings.alarmRoutine )
-
-			//sendMessage("Alarm")
-            if ( notifyArmed =="Yes" ){
-		        sendPush( "Alarm Triggered" )
-            }
-        } else if (partitionstatus == "armed"){
-
-			//Trigger Routine
-            location.helloHome?.execute( settings.armedRoutine )
-
-			if ( notifyAlarm =="Yes" ){
-		        sendPush( "Alarm Armed" )
-            }
-            //sendMessage("Armed")
-        } else if (partitionstatus == "disarmed"){
-
-			//Trigger Routine
-            location.helloHome?.execute( settings.disarmRoutine )
-
-			if ( notifyDisarmed == "Yes" ){
-		        sendPush( "Alarm Disarmed" )
-            }
-            //sendMessage("Disarmed")
-        }
 
 	}
 	return resp
