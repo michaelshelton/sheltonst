@@ -53,8 +53,8 @@ def mainPage() {
 			ifUnset "mySwitch", "capability.switch", title: "Switch Turned On", required: false, multiple: true
 			ifUnset "mySwitchOff", "capability.switch", title: "Switch Turned Off", required: false, multiple: true
 		}
-		section("Control these bulbs...") {
-			input "hues", "capability.colorControl", title: "Which Hue Bulbs?", required:true, multiple:true
+		section("Control these bulbs:") {
+			input "hues", "capability.colorControl", title: "Lights", required:true, multiple:true
 		}
 		section("Choose light effects...") {
 			input "color", "enum", title: "Hue Color?", required: false, multiple:false, options: [
@@ -134,22 +134,18 @@ def subscribeToEvents() {
 	}
 }
 
-def eventHandler(evt=null) {
-	log.trace "Executing Child Lighting"
-    
-    //[MS] What commands are available?
-    def caps = hues.capabilities
-	caps.commands.each {comm ->
-	    log.debug "-- Command name: ${comm.name}"
-	}
+def eventHandler(evt=null) {    
+    //[MS] Used when trying to figure out what calls can be made and what's available
+    //def caps = hues.capabilities
+	//caps.commands.each {comm ->
+	//    log.debug "-- Command name: ${comm.name}"
+	//}
+    //def supportedCommands = hues.supportedCommands
+    //supportedCommands.each {
+	//    log.debug "arguments for hues command ${it.name}: ${it.arguments}"
+    //}
 
-    def supportedCommands = hues.supportedCommands
-    // logs each command's arguments
-    supportedCommands.each {
-	    log.debug "arguments for hues command ${it.name}: ${it.arguments}"
-    }
 
-    
 	if (allOk) {
 		log.trace "allOk"
 		def lastTime = state[frequencyKey(evt)]
@@ -192,46 +188,62 @@ private takeAction(evt) {
 	def hueColor = 0
 	def hueSaturation = 100
 	def lightPercentage = lightLevel as Integer
+    def hex = "#ffffff"
 
 	switch(color) {
 		case "White":
 			hueColor = 52
 			saturation = 19
+            hex = "#ffffff"
 			break;
 		case "Daylight":
 			hueColor = 53
 			saturation = 91
+            hex = "#E3FFFF"
 			break;
 		case "Soft White":
 			hueColor = 23
 			saturation = 56
+            hex = "#FFF8C2"
 			break;
 		case "Warm White":
 			hueColor = 20
 			saturation = 80 //83
+            hex = "#FFEF78"
 			break;
 		case "Blue":
 			hueColor = 70
+            hex = "#0000FF"
 			break;
 		case "Green":
 			hueColor = 39
+            hex = "#008000"
 			break;
 		case "Yellow":
 			hueColor = 25
+            hex = "#FFFF00"
 			break;
 		case "Orange":
 			hueColor = 10
+            hex = "#FFA500"
 			break;
 		case "Purple":
 			hueColor = 75
+            hex = "#800080"
 			break;
 		case "Pink":
 			hueColor = 83
+            hex = "#FFC0CB"
 			break;
 		case "Red":
 			hueColor = 100
+            hex = "#FF0000"
 			break;
 	}
+
+
+	//Need to do a refresh first to get latest value from APIs since ST may not know latest
+    hues*.refresh()
 
 
     //Get current state of light
@@ -246,6 +258,8 @@ private takeAction(evt) {
 
 	def int loopItem = 0
 	hues.each {
+    
+    	//Get current state and store for color return
 		state.previous[loopItem] = [
         	//"bulbname": it,
 			"id": it.id,
@@ -253,7 +267,7 @@ private takeAction(evt) {
 			"level" : it.currentValue("level"),
 			"hue": it.currentValue("hue"),
 			"saturation": it.currentValue("saturation"),
-			//"hex": "'"+ it.currentValue("color") +"'",
+			"hex": it.currentValue("color"),
             "colorTemperature": it.currentValue("colorTemperature")
 		]
         
@@ -267,22 +281,16 @@ private takeAction(evt) {
 	}
 	//log.debug "Previous = "+ state.previous
     //return
+    
+    //Turn on first via Level
+	hues*.setLevel(lightLevel as Integer ?: 100)
+    
+    //Set Color ( [ColorMap, +transitionTime (my own property added in Lightify)] )
+	hues*.setColor( [hue: hueColor, saturation: hueSaturation, hex: hex, transitionTime: 1] )
 
 
-	def newValue = [hue: hueColor, saturation: hueSaturation, level: lightLevel as Integer ?: 100]
-	//log.debug "new value = $newValue"
-	hues*.setColor(newValue)
-
-	//	//Try setting new colors new way (Osram wasn't working correctly)
-	//	hues*.on()
-    //    hues*.setLevel( lightPercentage )
-    //    hues*.setHue( hueColor )
-    //    hues*.setSaturation( hueSaturation )
-
-
-	//[MS] Send Push Notification
+	//[MS] Send Push Notification -- BROKEN (I think there's a new way to do these)
     def message = "Child awake triggered."
-    log.info message
     send(message)
     
 
@@ -401,7 +409,7 @@ private timeIntervalLabel()
 
 //[MS] Change lights to previous state
 def returnPreviousState() {
-	log.debug "return lights to previous state here. Old State = ${state.previous}"
+	log.debug "Return lights to previous states = ${state.previous}"
 
 	state.previous.each {
     	//log.debug "it object-- "+ it
@@ -410,25 +418,27 @@ def returnPreviousState() {
         def BulbMapKey = it.key as Integer
         //log.debug "BulbMapKey = "+ BulbMapKey
 
-        //Set each property
+        //Turn light back off or back to original level
         if (it.value.switch == "on"){
-	        hues[BulbMapKey].on()
-        } else {
+	        hues[BulbMapKey].setLevel( it.value.level as Number ) //Level overrides .on()
+
+            //Order matters here, and note that each might trump the other (especially colorTemperature)
+            if (it.value.hex){
+                hues[BulbMapKey].setColor( [hex:it.value.hex as String, transitionTime: 1] )
+            } else if (it.value.hue){
+                hues[BulbMapKey].setHue( it.value.hue as Number )
+                hues[BulbMapKey].setSaturation( it.value.saturation as Number )
+            } else if ( it.value.colorTemperature != null ){
+                hues[BulbMapKey].setColorTemperature( it.value.colorTemperature as Number )
+            }
+
+		} else {
 	        hues[BulbMapKey].off()
         }
-        hues[BulbMapKey].setLevel( it.value.level as Number )
-        hues[BulbMapKey].setHue( it.value.hue as Number )
-        hues[BulbMapKey].setSaturation( it.value.saturation as Number )
-        if ( it.value.colorTemperature != null ){
-		    hues[BulbMapKey].setColorTemperature( it.value.colorTemperature as Number )
-        }
+        
 	}
 
-	log.debug "Out of each loop"
-    
-	//Works, but sets them all. What is hues*
-    //hues*.setColor([hue: 30, saturation: 100, level: 100 as Integer ?: 100])
-    
+	//log.debug "Out of each loop"
 }
 
 
