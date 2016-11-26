@@ -13,13 +13,12 @@ metadata {
 	capability "Alarm"
     capability "Polling"
     capability "Refresh"
-	capability "Button"
+	//capability "Button"
 
     // Add commands as needed
     command "partition"
     command "setPartitionState"
     
-      attribute "partition1", "string"
       attribute "alarmStatus", "string"
       attribute "alarmstate", "string"
   }
@@ -29,14 +28,15 @@ metadata {
   }
 
   //Icons here - http://scripts.3dgo.net/smartthings/icons/
-  tiles {
-    standardTile("dscpartition", "device.dscpartition", width: 2, height: 2, canChangeBackground: false, canChangeIcon: true) {
-      state "armed",     label: 'Armed',      backgroundColor: "#3BE00D", icon:"st.Home.home3"
-      state "exitdelay", label: 'Exit Delay', backgroundColor: "#ff9900", icon:"st.Home.home3"
-      state "entrydelay",label: 'Entry Delay', backgroundColor: "#ff9900", icon:"st.Home.home3"
-      state "notready",  label: 'Open',       backgroundColor: "#ffcc00", icon:"st.Home.home2"
-      state "ready",     label: 'Ready',      backgroundColor: "#0DA4E0", icon:"st.Home.home2"
-      state "alarm",     label: 'Alarm',      backgroundColor: "#ff0000", icon:"st.Home.home3"
+  tiles (scale: 1) {
+    standardTile("dscpartition", "device.dscpartition", width: 3, height: 2, canChangeBackground: false, canChangeIcon: false) {
+      state "armed",		label: 'Armed',      	backgroundColor: "#47BE47", icon:"st.Home.home3"
+      state "exitdelay",	label: 'Exit Delay', 	backgroundColor: "#ED9C59", icon:"st.Home.home3"
+      state "entrydelay",	label: 'Entry Delay',	backgroundColor: "#ED9C59", icon:"st.Home.home3"
+      state "notready",  	label: 'Open',       	backgroundColor: "#FFD2AE", icon:"st.Home.home2"
+      state "ready",     	label: 'Ready',      	backgroundColor: "#358E8E", icon:"st.Home.home2"
+      state "disarmed",    	label: 'Ready',      	backgroundColor: "#358E8E", icon:"st.Home.home2"
+      state "alarm",     	label: 'Alarm',      	backgroundColor: "#AB1818", icon:"st.Home.home3"
     }
 
     main "dscpartition"
@@ -59,13 +59,14 @@ def partition(String state, String partition) {
     // state will be a valid state for the panel (ready, notready, armed, etc)
     // partition will be a partition number, for most users this will always be 1
 
-    log.debug "Partition: ${state} for partition: ${partition}"
+	//Deprecated?
     sendEvent (name: "dscpartition", value: "${state}")
 }
 
 //[MS]
-def setPartitionState( String state ) {
-    sendEvent ( name: "dscpartition", value: state )
+def setPartitionState( String partitionState ) {
+    //sendEvent( name: "dscpartition", value: state )
+    sendEvent( name: "dscpartition", value: "${partitionState}", descriptionText: partitionState, displayed: true, isStateChange: true )
 }
 
 

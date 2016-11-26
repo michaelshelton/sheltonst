@@ -22,12 +22,12 @@ metadata {
     // Nothing here, you could put some testing stuff here if you like
   }
 
-  tiles {
+  tiles (scale: 1) {
     // Main Row
-    standardTile("zone", "device.contact", width: 2, height: 2, canChangeBackground: true, canChangeIcon: true) {
-      state "open",   label: '${name}', icon: "st.contact.contact.open",   backgroundColor: "#ff9900"
-      state "closed", label: '${name}', icon: "st.contact.contact.closed", backgroundColor: "#3BE00D"
-      state "alarm",  label: '${name}', icon: "st.contact.contact.open",   backgroundColor: "#ff0000"
+    standardTile("zone", "device.contact", width: 3, height: 2, canChangeBackground: true, canChangeIcon: true) {
+      state "open",   label: '${name}', icon: "st.contact.contact.open",   backgroundColor: "#ED9C59"
+      state "closed", label: '${name}', icon: "st.contact.contact.closed", backgroundColor: "#47BE47"
+      state "alarm",  label: '${name}', icon: "st.contact.contact.open",   backgroundColor: "#AB1818"
     }
 
     // This tile will be the tile that is displayed on the Hub page.
@@ -39,11 +39,11 @@ metadata {
 }
 
 // handle commands
-def zone(String state) {
-  // state will be a valid state for a zone (open, closed)
-  // zone will be a number for the zone
-  log.debug "Zone: ${state}"
-  sendEvent (name: "contact", value: "${state}")
+def zone(String contactState) {
+	// state will be a valid state for a zone (open, closed)
+	// zone will be a number for the zone
+	log.debug "Zone: ${contactState}"
+	sendEvent( name: "contact", value: "${contactState}", descriptionText: contactState, displayed: true, isStateChange: true )
 }
 
 def poll() {
