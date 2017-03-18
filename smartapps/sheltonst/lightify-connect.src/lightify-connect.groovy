@@ -33,7 +33,7 @@ preferences {
 		input "username", "text", title: "Username", description: "Lightify Email", value: "mike@sheltonstudios.net", required: true
 		input "password", "password", title: "Password", description: "Lightify Password", value: "yOp&GarTe#m3Cxcp", required: true
 		input "serial", "text", title: "Serial", description: "Gateway Serial Number", value: "OSR027CAE67", required: true		
-		input "fade", "number", title: "Transition Time", description: "Valid Range 1-*.", range: "1..*", value: "30"
+		input "fade", "number", title: "Transition Time", description: "1/10 Second (1-80)", range: "1..80", value: "30"
 	}
 
 }
