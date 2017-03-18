@@ -26,7 +26,7 @@ metadata {
 
 
 	preferences {
-		input "fade", "number", title: "Transition Time", description: "Valid Range 1-*.", range: "1..*"
+		input "fade", "number", title: "Transition Time", description: "1/10 Second (1-80)", range: "1..80"
 	}
     
     tiles(scale: 1) {
@@ -117,6 +117,11 @@ def setLevel( level ){
 
 
 def setColor( colorSetValue ){
+	
+    //[MS] Tried to force a quick change from other apps
+    //def fadeTime = getTransitionTime(colorSetValue)
+    //log.debug "Custom Fade: ${fadeTime}"
+	
 	log.debug "child setColor called: ${colorSetValue}"
 	parent.setColor (this, colorSetValue, fade)
 }
@@ -131,4 +136,21 @@ def customTileCommand(value) {
 
 def installed() {
 	log.debug "Lightify Device Install Function"
+}
+
+
+
+//General Functions
+// ------------------------------------
+
+private getTransitionTime(SetValue){
+
+    def fadeTime
+    if ( SetValue.transitionTime ){
+    	fadeTime = SetValue.transitionTime    	
+	} else {
+    	fadeTime = fade    	
+    }
+    return fadeTime
+
 }
