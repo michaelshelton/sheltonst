@@ -45,10 +45,9 @@ def installed() {
 
 def updated() {
 	log.debug "Update Settings: ${settings}"
-    
 	unsubscribe()
     
-    //Probably don't want it to add devices each time we save the app. Using for Testing. Although how do we handle New devices?
+    //Should this do something special on update?
 	initialize()
     log.debug "updated"
 }
@@ -282,22 +281,24 @@ def getLightifyDevices(){
 		//how to get the count? Still broken... tried -- count, length, size
 		//log.debug "Total Items: " response.data.size()
 
-		//Add child devices to ST if not exist
+		//Get Lightify Devices
     	response.data.each {device->
-	       	log.debug "${device.deviceId} - ${device.name}"
+	       	//log.debug "${device.deviceId} - ${device.name}"
             def stDeviceId = "lightify-${device.deviceId}"
             def stDevice = state.devices.find{it.id==stDeviceId}
             
             //log.debug stDeviceId
 
-			if (stDevice) {
-            	//log.debug "Device Exists"
 
+            //Only add new devices
+            def existing = getChildDevice(stDeviceId)
+            if (existing) {
+                //log.debug "does exist - ${stDeviceId}"
+                return
             } else {
-            	//log.debug "Device Doesn't Exist. addChildDevice --> ${stDeviceId}"
+                //log.debug "does not exist, so create -  ${stDeviceId}"
 
-///////
-                def cDevice = addChildDevice("SheltonST", "LightifyBulb", "lightify-${device.deviceId}", location.hubs[0].id, [
+					def cDevice = addChildDevice("SheltonST", "LightifyBulb", "lightify-${device.deviceId}", location.hubs[0].id, [
                         name: "Lightify ${device.name}",
                         label: device.name,
                         completedSetup: true
@@ -306,28 +307,9 @@ def getLightifyDevices(){
                 //log.debug "New = ${cDevice.displayName}"
 
                 //Set device current states 
-///////
-                
-                //def cDevice = addChildDevice("SheltonST", "LightifyBulb", stDeviceId, location.hubs[0].id, [
-                //	name: "${device.name}",
-                //    label: "${device.name}",
-                //    completedSetup: true
-                //])
             }
 		}
-    
-    	/*
-        settings.devices.each {deviceId->
-            def device = state.devices.find{it.id==deviceId}
-            if (device) {
-            	log.debug "settings -- yes if device"
-                //def childDevice = addChildDevice("smartthings", "Device Name", deviceId, null, [name: "Device.${deviceId}", label: device.name, completedSetup: true])
-            } else {
-            	log.debug "settings -- no if device"
-            }
-        }
-        */
-    }
+	}
     
     return
 }
